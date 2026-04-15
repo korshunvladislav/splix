@@ -110,6 +110,18 @@ type UserPatch struct {
     Email       Nullable[string]
 }
 
+func NewUserPatch(
+    fullName Nullable[string],
+    phoneNumber Nullable[string],
+    email Nullable[string],
+) UserPatch {
+    return UserPatch{
+        FullName:    fullName,
+        PhoneNumber: phoneNumber,
+        Email:       email,
+    }
+}
+
 func (p *UserPatch) Validate() error {
     if p.FullName.Set && p.FullName.Value == nil {
         return fmt.Errorf(

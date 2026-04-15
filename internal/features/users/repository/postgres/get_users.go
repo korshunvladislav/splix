@@ -47,6 +47,8 @@ func (r *UsersRepository) GetUsers(
         args = append(args, *offset)
     }
 
+    query.WriteString(";")
+
     rows, err := r.pool.Query(ctx, query.String(), args...)
     if err != nil {
         return nil, fmt.Errorf("select users: %w", err)

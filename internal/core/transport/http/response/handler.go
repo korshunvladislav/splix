@@ -92,8 +92,6 @@ func (h *HTTPResponseHandler) errorResponse(
     err error,
     msg string,
 ) {
-    h.w.WriteHeader(statusCode)
-
     response := map[string]string{
         "message": msg,
         "error":   err.Error(),
