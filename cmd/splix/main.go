@@ -6,11 +6,16 @@ import (
     "os"
     "os/signal"
     "syscall"
+    "time"
 
+    core_config "github.com/korshunvladislav/splix/internal/core/config"
     core_logger "github.com/korshunvladislav/splix/internal/core/logger"
     core_pgx_pool "github.com/korshunvladislav/splix/internal/core/repository/postgres/pool/pgx"
     core_http_middleware "github.com/korshunvladislav/splix/internal/core/transport/http/middleware"
     core_http_server "github.com/korshunvladislav/splix/internal/core/transport/http/server"
+    groups_postgres_repository "github.com/korshunvladislav/splix/internal/features/groups/repository/postgres"
+    groups_service "github.com/korshunvladislav/splix/internal/features/groups/service"
+    groups_transport_http "github.com/korshunvladislav/splix/internal/features/groups/transport/http"
     users_postgres_repository "github.com/korshunvladislav/splix/internal/features/users/repository/postgres"
     users_service "github.com/korshunvladislav/splix/internal/features/users/service"
     users_transport_http "github.com/korshunvladislav/splix/internal/features/users/transport/http"
@@ -18,6 +23,9 @@ import (
 )
 
 func main() {
+    cfg := core_config.NewConfigMust()
+    time.Local = cfg.TimeZone
+
     ctx, cancel := signal.NotifyContext(
         context.Background(),
         syscall.SIGINT, syscall.SIGTERM,
@@ -30,6 +38,8 @@ func main() {
         os.Exit(1)
     }
     defer logger.Close()
+
+    logger.Debug("application time zone", zap.Any("zone", time.Local))
 
     logger.Debug("initializing postgres connection pool")
     pool, err := core_pgx_pool.NewPool(
@@ -46,6 +56,11 @@ func main() {
     usersService := users_service.NewUsersService(usersRepository)
     usersTransportHTTP := users_transport_http.NewUsersHTTPHandler(usersService)
 
+    logger.Debug("initializing feature", zap.String("feature", "groups"))
+    groupsRepository := groups_postgres_repository.NewGroupsRepository(pool)
+    groupsService := groups_service.NewGroupsService(groupsRepository)
+    groupsTransportHTTP := groups_transport_http.NewGroupsHTTPHandler(groupsService)
+
     logger.Debug("initializing HTTP server")
     httpServer := core_http_server.NewHTTPServer(
         core_http_server.NewConfigMust(),
@@ -57,6 +72,7 @@ func main() {
     )
     apiVersionRouterV1 := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion1)
     apiVersionRouterV1.RegisterRoutes(usersTransportHTTP.Routes()...)
+    apiVersionRouterV1.RegisterRoutes(groupsTransportHTTP.Routes()...)
 
     /*
        Example of usage apiVersionRouterV2 with separate Middleware
