@@ -1,49 +1,49 @@
 package users_service
 
 import (
-    "context"
+	"context"
 
-    "github.com/korshunvladislav/splix/internal/core/domain"
+	"github.com/korshunvladislav/splix/internal/core/domain"
 )
 
 type UsersService struct {
-    usersRepository UsersRepository
+	usersRepository UsersRepository
 }
 
 type UsersRepository interface {
-    CreateUser(
-        ctx context.Context,
-        user domain.User,
-    ) (domain.User, error)
+	CreateUser(
+		ctx context.Context,
+		user domain.User,
+	) (domain.User, error)
 
-    GetUsers(
-        ctx context.Context,
-        groupId *int,
-        limit *int,
-        offset *int,
-    ) ([]domain.User, error)
+	GetUsers(
+		ctx context.Context,
+		groupID *int,
+		limit *int,
+		offset *int,
+	) ([]domain.User, error)
 
-    GetUser(
-        ctx context.Context,
-        id int,
-    ) (domain.User, error)
+	GetUser(
+		ctx context.Context,
+		id int,
+	) (domain.User, error)
 
-    DeleteUser(
-        ctx context.Context,
-        id int,
-    ) error
+	DeleteUser(
+		ctx context.Context,
+		id int,
+	) error
 
-    PatchUser(
-        ctx context.Context,
-        id int,
-        user domain.User,
-    ) (domain.User, error)
+	PatchUser(
+		ctx context.Context,
+		id int,
+		user domain.User,
+	) (domain.User, error)
 }
 
 func NewUsersService(
-    usersRepository UsersRepository,
+	usersRepository UsersRepository,
 ) *UsersService {
-    return &UsersService{
-        usersRepository: usersRepository,
-    }
+	return &UsersService{
+		usersRepository: usersRepository,
+	}
 }

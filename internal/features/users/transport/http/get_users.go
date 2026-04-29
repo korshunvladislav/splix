@@ -1,67 +1,67 @@
 package users_transport_http
 
 import (
-    "fmt"
-    "net/http"
+	"fmt"
+	"net/http"
 
-    core_logger "github.com/korshunvladislav/splix/internal/core/logger"
-    core_http_request "github.com/korshunvladislav/splix/internal/core/transport/http/request"
-    core_http_response "github.com/korshunvladislav/splix/internal/core/transport/http/response"
+	core_logger "github.com/korshunvladislav/splix/internal/core/logger"
+	core_http_request "github.com/korshunvladislav/splix/internal/core/transport/http/request"
+	core_http_response "github.com/korshunvladislav/splix/internal/core/transport/http/response"
 )
 
 type GetUsersResponse []UserDTOResponse
 
 func (h *UsersHTTPHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
-    ctx := r.Context()
-    log := core_logger.FromContext(ctx)
-    responseHandler := core_http_response.NewHTTPResponseHandler(log, w)
+	ctx := r.Context()
+	log := core_logger.FromContext(ctx)
+	responseHandler := core_http_response.NewHTTPResponseHandler(log, w)
 
-    groupId, limit, offset, err := getGroupIdLimitOffsetQueryParams(r)
-    if err != nil {
-        responseHandler.ErrorResponse(
-            err,
-            "failed to get 'group_id'/'limit'/'offset' query params",
-        )
+	groupID, limit, offset, err := getGroupIDLimitOffsetQueryParams(r)
+	if err != nil {
+		responseHandler.ErrorResponse(
+			err,
+			"failed to get 'group_id'/'limit'/'offset' query params",
+		)
 
-        return
-    }
+		return
+	}
 
-    userDomains, err := h.usersService.GetUsers(ctx, groupId, limit, offset)
-    if err != nil {
-        responseHandler.ErrorResponse(
-            err,
-            "failed to get 'users'",
-        )
+	userDomains, err := h.usersService.GetUsers(ctx, groupID, limit, offset)
+	if err != nil {
+		responseHandler.ErrorResponse(
+			err,
+			"failed to get 'users'",
+		)
 
-        return
-    }
+		return
+	}
 
-    response := GetUsersResponse(usersDTOFromDomains(userDomains))
+	response := GetUsersResponse(usersDTOFromDomains(userDomains))
 
-    responseHandler.JSONResponse(response, http.StatusOK)
+	responseHandler.JSONResponse(response, http.StatusOK)
 }
 
-func getGroupIdLimitOffsetQueryParams(r *http.Request) (*int, *int, *int, error) {
-    const (
-        groupIdQueryParamKey = "group_id"
-        limitQueryParamKey   = "limit"
-        offsetQueryParamKey  = "offset"
-    )
+func getGroupIDLimitOffsetQueryParams(r *http.Request) (*int, *int, *int, error) {
+	const (
+		groupIDQueryParamKey = "group_id"
+		limitQueryParamKey   = "limit"
+		offsetQueryParamKey  = "offset"
+	)
 
-    groupId, err := core_http_request.GetIntQueryParam(r, groupIdQueryParamKey)
-    if err != nil {
-        return nil, nil, nil, fmt.Errorf("get 'group_id' query param: %w", err)
-    }
+	groupID, err := core_http_request.GetIntQueryParam(r, groupIDQueryParamKey)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("get 'group_id' query param: %w", err)
+	}
 
-    limit, err := core_http_request.GetIntQueryParam(r, limitQueryParamKey)
-    if err != nil {
-        return nil, nil, nil, fmt.Errorf("get 'limit' query param: %w", err)
-    }
+	limit, err := core_http_request.GetIntQueryParam(r, limitQueryParamKey)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("get 'limit' query param: %w", err)
+	}
 
-    offset, err := core_http_request.GetIntQueryParam(r, offsetQueryParamKey)
-    if err != nil {
-        return nil, nil, nil, fmt.Errorf("get 'offset' query param: %w", err)
-    }
+	offset, err := core_http_request.GetIntQueryParam(r, offsetQueryParamKey)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("get 'offset' query param: %w", err)
+	}
 
-    return groupId, limit, offset, nil
+	return groupID, limit, offset, nil
 }

@@ -1,88 +1,88 @@
 package users_transport_http
 
 import (
-    "context"
-    "net/http"
+	"context"
+	"net/http"
 
-    "github.com/korshunvladislav/splix/internal/core/domain"
-    core_http_server "github.com/korshunvladislav/splix/internal/core/transport/http/server"
+	"github.com/korshunvladislav/splix/internal/core/domain"
+	core_http_server "github.com/korshunvladislav/splix/internal/core/transport/http/server"
 )
 
 type UsersHTTPHandler struct {
-    usersService UsersService
+	usersService UsersService
 }
 
 type UsersService interface {
-    CreateUser(
-        ctx context.Context,
-        user domain.User,
-    ) (domain.User, error)
+	CreateUser(
+		ctx context.Context,
+		user domain.User,
+	) (domain.User, error)
 
-    GetUsers(
-        ctx context.Context,
-        groupId *int,
-        limit *int,
-        offset *int,
-    ) ([]domain.User, error)
+	GetUsers(
+		ctx context.Context,
+		groupID *int,
+		limit *int,
+		offset *int,
+	) ([]domain.User, error)
 
-    GetUser(
-        ctx context.Context,
-        id int,
-    ) (domain.User, error)
+	GetUser(
+		ctx context.Context,
+		id int,
+	) (domain.User, error)
 
-    DeleteUser(
-        ctx context.Context,
-        id int,
-    ) error
+	DeleteUser(
+		ctx context.Context,
+		id int,
+	) error
 
-    PatchUser(
-        ctx context.Context,
-        id int,
-        patch domain.UserPatch,
-    ) (domain.User, error)
+	PatchUser(
+		ctx context.Context,
+		id int,
+		patch domain.UserPatch,
+	) (domain.User, error)
 }
 
 func NewUsersHTTPHandler(
-    usersService UsersService,
+	usersService UsersService,
 ) *UsersHTTPHandler {
-    return &UsersHTTPHandler{
-        usersService: usersService,
-    }
+	return &UsersHTTPHandler{
+		usersService: usersService,
+	}
 }
 
 func (h *UsersHTTPHandler) Routes() []core_http_server.Route {
-    return []core_http_server.Route{
-        {
-            Method:  http.MethodPost,
-            Path:    "/users",
-            Handler: h.CreateUser,
-        },
-        {
-            Method:  http.MethodGet,
-            Path:    "/users",
-            Handler: h.GetUsers,
-            /*
-               Example of usage Middleware on separate Route
+	return []core_http_server.Route{
+		{
+			Method:  http.MethodPost,
+			Path:    "/users",
+			Handler: h.CreateUser,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/users",
+			Handler: h.GetUsers,
+			/*
+			   Example of usage Middleware on separate Route
 
-               Middleware: []core_http_middleware.Middleware{
-                  core_http_middleware.Dummy("get users middleware"),
-               },
-            */
-        },
-        {
-            Method:  http.MethodGet,
-            Path:    "/users/{id}",
-            Handler: h.GetUser,
-        },
-        {
-            Method:  http.MethodDelete,
-            Path:    "/users/{id}",
-            Handler: h.DeleteUser,
-        },
-        {
-            Method:  http.MethodPatch,
-            Path:    "/users/{id}",
-            Handler: h.PatchUser,
-        },
-    }
+			   Middleware: []core_http_middleware.Middleware{
+			      core_http_middleware.Dummy("get users middleware"),
+			   },
+			*/
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/users/{id}",
+			Handler: h.GetUser,
+		},
+		{
+			Method:  http.MethodDelete,
+			Path:    "/users/{id}",
+			Handler: h.DeleteUser,
+		},
+		{
+			Method:  http.MethodPatch,
+			Path:    "/users/{id}",
+			Handler: h.PatchUser,
+		},
+	}
 }
