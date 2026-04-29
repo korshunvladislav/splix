@@ -1,84 +1,72 @@
 package users_postgres_repository
 
 import (
-    "context"
-    "fmt"
-    "strings"
+	"context"
+	"fmt"
 
-    "github.com/korshunvladislav/splix/internal/core/domain"
+	"github.com/korshunvladislav/splix/internal/core/domain"
 )
 
 func (r *UsersRepository) GetUsers(
-    ctx context.Context,
-    groupId *int,
-    limit *int,
-    offset *int,
+	ctx context.Context,
+	groupID *int,
+	limit *int,
+	offset *int,
 ) ([]domain.User, error) {
-    ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
-    defer cancel()
+	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
+	defer cancel()
 
-    query := strings.Builder{}
-
-    query.WriteString(`
+	query := `
     SELECT u.id, u.version, u.full_name, u.phone_number, u.email, u.created_at, u.updated_at
     FROM splix.users u
-    `)
+    %s
+    ORDER BY u.id
+    LIMIT $1
+    OFFSET $2;
+    `
 
-    args := make([]interface{}, 0)
-    argCounter := 1
+	args := []any{limit, offset}
 
-    if groupId != nil {
-        query.WriteString(` JOIN splix.group_members gm ON gm.user_id = u.id `)
-        query.WriteString(fmt.Sprintf(" WHERE gm.group_id = $%d ", argCounter))
-        args = append(args, *groupId)
-        argCounter++
-    }
+	if groupID != nil {
+		query = fmt.Sprintf(query, `
+        JOIN splix.group_members gm ON gm.user_id = u.id
+        WHERE gm.group_id = $3;
+        `)
+		args = append(args, groupID)
+	} else {
+		query = fmt.Sprintf(query, "")
+	}
 
-    query.WriteString(` ORDER BY u.id ASC `)
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("select users: %w", err)
+	}
+	defer rows.Close()
 
-    if limit != nil {
-        query.WriteString(fmt.Sprintf(" LIMIT $%d ", argCounter))
-        args = append(args, *limit)
-        argCounter++
-    }
+	var userModels []UserModel
+	for rows.Next() {
+		var userModel UserModel
 
-    if offset != nil {
-        query.WriteString(fmt.Sprintf(" OFFSET $%d ", argCounter))
-        args = append(args, *offset)
-    }
+		err := rows.Scan(
+			&userModel.ID,
+			&userModel.Version,
+			&userModel.FullName,
+			&userModel.PhoneNumber,
+			&userModel.Email,
+			&userModel.CreatedAt,
+			&userModel.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan users: %w", err)
+		}
 
-    query.WriteString(";")
+		userModels = append(userModels, userModel)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("next rows: %w", err)
+	}
 
-    rows, err := r.pool.Query(ctx, query.String(), args...)
-    if err != nil {
-        return nil, fmt.Errorf("select users: %w", err)
-    }
-    defer rows.Close()
+	userDomains := userDomainsFromModels(userModels)
 
-    var userModels []UserModel
-    for rows.Next() {
-        var userModel UserModel
-
-        err := rows.Scan(
-            &userModel.ID,
-            &userModel.Version,
-            &userModel.FullName,
-            &userModel.PhoneNumber,
-            &userModel.Email,
-            &userModel.CreatedAt,
-            &userModel.UpdatedAt,
-        )
-        if err != nil {
-            return nil, fmt.Errorf("scan users: %w", err)
-        }
-
-        userModels = append(userModels, userModel)
-    }
-    if err := rows.Err(); err != nil {
-        return nil, fmt.Errorf("next rows: %w", err)
-    }
-
-    userDomains := userDomainsFromModels(userModels)
-
-    return userDomains, nil
+	return userDomains, nil
 }
