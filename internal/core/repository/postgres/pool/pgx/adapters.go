@@ -33,18 +33,31 @@ type pgxCommandTag struct {
 func mapErrors(err error) error {
     const (
         pgxViolatesForeignKeyErrorCode = "23503"
+        pgxViolatesConstraintErrorCode = "23505"
     )
 
     if errors.Is(err, pgx.ErrNoRows) {
-        return core_postgres_pool.ErrNoRows
+        return fmt.Errorf(
+            "%v: %w",
+            err,
+            core_postgres_pool.ErrNoRows,
+        )
     }
 
     if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-        if pgErr.Code == pgxViolatesForeignKeyErrorCode {
+        switch pgErr.Code {
+        case pgxViolatesForeignKeyErrorCode:
             return fmt.Errorf(
                 "%v: %w",
                 err,
                 core_postgres_pool.ErrViolatesForeignKey,
+            )
+
+        case pgxViolatesConstraintErrorCode:
+            return fmt.Errorf(
+                "%v: %w",
+                err,
+                core_postgres_pool.ErrViolatesUnique,
             )
         }
     }

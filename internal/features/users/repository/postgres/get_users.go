@@ -30,7 +30,7 @@ func (r *UsersRepository) GetUsers(
 	if groupID != nil {
 		query = fmt.Sprintf(query, `
         JOIN splix.group_members gm ON gm.user_id = u.id
-        WHERE gm.group_id = $3;
+        WHERE gm.group_id = $3
         `)
 		args = append(args, groupID)
 	} else {
