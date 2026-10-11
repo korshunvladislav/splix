@@ -30,6 +30,7 @@ func (h *HTTPResponseHandler) JSONResponse(
     responseBody any,
     statusCode int,
 ) {
+    h.w.Header().Set("Content-Type", "application/json")
     h.w.WriteHeader(statusCode)
 
     if err := json.NewEncoder(h.w).Encode(responseBody); err != nil {
@@ -38,7 +39,11 @@ func (h *HTTPResponseHandler) JSONResponse(
 }
 
 func (h *HTTPResponseHandler) NoContentResponse() {
-    h.w.WriteHeader(http.StatusNoContent)
+    h.EmptyResponse(http.StatusNoContent)
+}
+
+func (h *HTTPResponseHandler) EmptyResponse(statusCode int) {
+    h.w.WriteHeader(statusCode)
 }
 
 func (h *HTTPResponseHandler) ErrorResponse(err error, msg string) {

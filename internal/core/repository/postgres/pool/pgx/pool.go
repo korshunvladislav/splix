@@ -77,7 +77,7 @@ func (p *Pool) Exec(
 ) (core_postgres_pool.CommandTag, error) {
     tag, err := p.Pool.Exec(ctx, sql, arguments...)
     if err != nil {
-        return nil, err
+        return nil, mapErrors(err)
     }
 
     return pgxCommandTag{tag}, nil

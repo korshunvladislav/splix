@@ -18,9 +18,21 @@ func (r *GroupsRepository) CreateGroup(
     defer cancel()
 
     query := `
-    INSERT INTO splix.groups (title, description, currency, creator_user_id)
-    VALUES ($1, $2, $3, $4)
-    RETURNING id, version, title, description, currency, creator_user_id, created_at, updated_at;
+    WITH new_group AS (
+        INSERT INTO splix.groups (
+            title, description, currency, creator_user_id
+        )
+        VALUES ($1, $2, $3, $4)
+        RETURNING *
+    ),
+    new_member AS (
+        INSERT INTO splix.group_members (group_id, user_id)
+        SELECT id, creator_user_id
+        FROM new_group
+    )
+    SELECT id, version, title, description, currency,
+        creator_user_id, created_at, updated_at
+    FROM new_group;
     `
 
     row := r.pool.QueryRow(
